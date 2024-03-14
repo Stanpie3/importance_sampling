@@ -1,12 +1,7 @@
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn.functional as F
-from torchvision.datasets import CIFAR10, MNIST, CIFAR100
-from torchvision import transforms
-from torch.utils.data.sampler import SubsetRandomSampler
-from torch.utils.data import DataLoader
-from tqdm.auto import tqdm
+
 
 
 class VarReductionCondition:
@@ -42,10 +37,12 @@ class VarReductionCondition:
             self._momentum * self._vr +
             (1-self._momentum) * new_vr
         )
+        print(f"vr={self._vr:.3f},  vr_th={self._vr_th:.3f}")
 
 
 
-def get_g(output, y_batch ,num_classes ):
+def get_g(output, y_batch  ):
+    num_classes = output.shape[1]
     with torch.no_grad():
         probs = F.softmax(output, dim=1)
         one_hot_targets = F.one_hot(y_batch, num_classes=num_classes)
@@ -62,6 +59,7 @@ def train_batch_is(model,
                 condition :VarReductionCondition, 
                 presample = 3.0 ):
 
+
     model.train()
     model.zero_grad()
 
@@ -70,16 +68,19 @@ def train_batch_is(model,
     selected_batch_size = int(batch_size / presample)
     
     if condition.satisfied :
-
+        print("in condition satisfied")
         output = model(x_batch)
-        num_classes = output.shape[1]
 
-        g_i_norm = get_g(output, y_batch ,num_classes )
+
+        g_i_norm = get_g(output, y_batch  )
 
         condition.update(g_i_norm)
+        
         N = batch_size
+        print("condition satisfied")
     else:
-        p_i = np.ones(batch_size)
+        g_i_norm = np.ones(batch_size)
+        print("condition not satisfied")
         N = whole_dataset_size
 
     p_i = g_i_norm / np.sum(g_i_norm)
@@ -88,15 +89,15 @@ def train_batch_is(model,
     selected_p_i = p_i[batch_indices]
 
     if condition.previously_satisfied:
-        output = output[batch_indices]
         loss = loss_fn(output, y_batch)
         selected_loss = loss[batch_indices]
     else :
         output = model(x_batch[batch_indices])
         y_batch = y_batch[batch_indices]
-        condition.update( get_g(output, y_batch ,num_classes) )
-        loss = loss_fn(output, y_batch[batch_indices])
+        condition.update( get_g(output, y_batch ) )
+        loss = loss_fn(output, y_batch)
         selected_loss = loss
+
         
     w_i = 1.0 / (N * selected_p_i)
 
