@@ -1,5 +1,8 @@
 
 
+def _has_len(obj):
+    return hasattr(obj, '__len__')
+
 class Average():
     def __init__(self):
         self.reset()
@@ -9,25 +12,31 @@ class Average():
         self.sum = 0
         
     def avg(self):
-        self.avg = self.sum / float(self.count)
+        return  self.sum / float(self.count)
 
     def update(self, val, n=1):
         assert(n > 0)
+        print(self.count)
         self.sum += val * n
         self.count += n
 
 
 class Accumulator():
     def __init__(self):
-        items = dict()
+        self.items = dict()
+
 
     def __call__(self,**kwargs):
-        for i in kwargs:
-            if len(i)==2: 
-                pass
+        for key, i in kwargs.items():
+            if not (key in self.items):
+                self.items[key] = Average()
+            d , n = i if _has_len(i) and len(i)>1 else (i,1)
+            self.items[key].update(d , n)
 
-
-
+    def __str__(self):
+        return "["+ ", ".join([f"{key}: {i.avg()}" for key, i in self.items.items()]) + "]"
+            
+    
 
 
 class CallBack:
@@ -68,3 +77,15 @@ class CallBack:
         self.val_accs.append(acc_val)
         self.n_un.append(n_un)
         return self.last_info()
+    
+
+
+acc = Accumulator()
+
+
+acc(accuracy= (10,20), data=10,newo =6.6)
+
+acc(accuracy= (10,10), data=5,newo =6.6)
+acc(accuracy= (10,10), data=5,newo =6.6)
+
+print(acc)

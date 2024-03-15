@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from common_utils import Average
+from common_utils import Accumulator
 
 class VarReductionCondition:
 
@@ -52,13 +52,52 @@ def get_g(output, y_batch  ):
 
 
 
+class CallBack:
+    def __init__(self, eval_fn, name=None):
+        self.eval_fn = eval_fn
+        self.train_losses = []
+        self.train_accs = []
+        self.train_w_losses = []
+        self.train_max_p_i = []
+        self.train_num_unique_points = []
+        self.val_losses = []
+        self.val_accs = []
+        self.n_un = []
+
+
+        
+
+    def last_info(self):
+        return {'loss_train': f'{self.train_losses[-1]:.3f}',
+                'acc_train': f'{self.train_accs[-1]:.3f}',
+                'w_loss_train': f'{self.train_w_losses[-1]:.3f}',
+                'loss_val': f'{self.val_losses[-1]:.3f}',
+                'acc_val': f'{self.val_accs[-1]:.3f}',
+                'n_un': f'{self.n_un[-1]:.3f}',
+        }
+    
+
+
+    def __call__(self, model, val_dataloader, loss_fn,
+                 epoch_loss=None, epoch_acc=None, epoch_weighted_loss=None, epoch_max_p_i_s=None, epoch_num_unique_points_s=None, n_un=None):
+        self.train_losses.append(epoch_loss)
+        self.train_accs.append(epoch_acc)
+        self.train_w_losses.append(epoch_weighted_loss)
+        self.train_max_p_i.append(epoch_max_p_i_s)
+        self.train_num_unique_points.append(epoch_num_unique_points_s)
+        loss_val, acc_val = self.eval_fn(model, val_dataloader, loss_fn)
+        self.val_losses.append(loss_val)
+        self.val_accs.append(acc_val)
+        self.n_un.append(n_un)
+        return self.last_info()
+
 
 def train_batch_is(model,
                 x_batch, 
                 y_batch, 
                 loss_fn, 
                 optimizer,
-                accumulator,  
+                accumulator : Accumulator,  
                 condition :VarReductionCondition, 
                 presample = 3.0 ):
 
@@ -95,7 +134,7 @@ def train_batch_is(model,
         condition.update( get_g(output, y_batch ) )
         loss = loss_fn(output, y_batch)
         selected_loss = loss
-
+        flag = True
         
     w_i = 1.0 / (batch_size * selected_p_i)
 
@@ -105,17 +144,22 @@ def train_batch_is(model,
 
     optimizer.step()
 
-    batch_loss = loss.mean().cpu().item()
-    weighted_batch_loss = weighted_loss.mean().cpu().item()
     max_p_i = np.max(p_i)
 
     num_unique_points = np.unique(batch_indices).size
 
-    accumulator()
-
     with torch.no_grad():
-        batch_acc_sum = (output.argmax(dim=1) == y_batch).sum().cpu().item()
-    
-    #print(len(output), output.shape, batch_acc_sum/len(output),batch_loss)
+        batch_loss = loss.mean().cpu().item()
+        weighted_batch_loss = weighted_loss.mean().cpu().item()
+        batch_acc_sum = (output.argmax(dim=1) == y_batch).mean().cpu().item()
 
-    return batch_loss, batch_acc_sum, weighted_batch_loss, max_p_i, num_unique_points, selected_batch_size, len(output), flag
+    n = len(output)
+
+
+    accumulator( train_losses = ( batch_loss, n) ,
+                 train_accs = ( batch_acc_sum, n) ,
+                 train_w_losses = ( weighted_batch_loss, selected_batch_size) ,
+                 train_flag = flag
+                )
+
+    return  max_p_i, num_unique_points
