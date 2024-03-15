@@ -1,3 +1,5 @@
+
+
 class Average():
     def __init__(self):
         self.reset()
@@ -5,13 +7,26 @@ class Average():
     def reset(self):
         self.count = 0
         self.sum = 0
-        self.avg = 0
+        
+    def avg(self):
+        self.avg = self.sum / float(self.count)
 
     def update(self, val, n=1):
         assert(n > 0)
         self.sum += val * n
         self.count += n
-        self.avg = self.sum / float(self.count)
+
+
+class Accumulator():
+    def __init__(self):
+        items = dict()
+
+    def __call__(self,**kwargs):
+        for i in kwargs:
+            if len(i)==2: 
+                pass
+
+
 
 
 
@@ -27,6 +42,9 @@ class CallBack:
         self.val_accs = []
         self.n_un = []
 
+
+        
+
     def last_info(self):
         return {'loss_train': f'{self.train_losses[-1]:.3f}',
                 'acc_train': f'{self.train_accs[-1]:.3f}',
@@ -35,6 +53,9 @@ class CallBack:
                 'acc_val': f'{self.val_accs[-1]:.3f}',
                 'n_un': f'{self.n_un[-1]:.3f}',
         }
+    
+
+
     def __call__(self, model, val_dataloader, loss_fn,
                  epoch_loss=None, epoch_acc=None, epoch_weighted_loss=None, epoch_max_p_i_s=None, epoch_num_unique_points_s=None, n_un=None):
         self.train_losses.append(epoch_loss)

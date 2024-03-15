@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+from common_utils import Average
 
 class VarReductionCondition:
 
@@ -50,12 +51,14 @@ def get_g(output, y_batch  ):
     return g_i_norm
 
 
+
+
 def train_batch_is(model,
                 x_batch, 
                 y_batch, 
                 loss_fn, 
-                optimizer, 
-                whole_dataset_size, 
+                optimizer,
+                accumulator,  
                 condition :VarReductionCondition, 
                 presample = 3.0 ):
 
@@ -72,16 +75,14 @@ def train_batch_is(model,
         output = model(x_batch)
         g_i_norm = get_g(output, y_batch  )
         condition.update(g_i_norm)
-        N = batch_size
-        flag = True
+
     else:
         #print("condition not satisfied")
         g_i_norm = np.ones(batch_size)
-        N = whole_dataset_size
-        #N = batch_size
+
 
     p_i = g_i_norm / np.sum(g_i_norm)
-    batch_indices = np.random.choice(np.arange(batch_size), size=selected_batch_size, replace=True, p=p_i)
+    batch_indices = np.random.choice(np.arange(batch_size), size = selected_batch_size, replace=True, p=p_i)
 
     selected_p_i = p_i[batch_indices]
 
@@ -96,7 +97,7 @@ def train_batch_is(model,
         selected_loss = loss
 
         
-    w_i = 1.0 / (N * selected_p_i)
+    w_i = 1.0 / (batch_size * selected_p_i)
 
     weighted_loss = (torch.tensor(w_i).to(selected_loss.device).detach() * selected_loss).mean()
 
@@ -110,8 +111,11 @@ def train_batch_is(model,
 
     num_unique_points = np.unique(batch_indices).size
 
+    accumulator()
+
     with torch.no_grad():
         batch_acc_sum = (output.argmax(dim=1) == y_batch).sum().cpu().item()
     
+    #print(len(output), output.shape, batch_acc_sum/len(output),batch_loss)
 
     return batch_loss, batch_acc_sum, weighted_batch_loss, max_p_i, num_unique_points, selected_batch_size, len(output), flag
