@@ -23,23 +23,39 @@ class Average():
 
 class Accumulator():
     def __init__(self):
-        self.items = dict()
-
+        pass
 
     def __call__(self,**kwargs):
         for key, i in kwargs.items():
-            if not (key in self.items):
-                self.items[key] = Average()
+            if not (key in self.__dict__):
+                self.__dict__[key] = Average()
             d , n = i if _has_len(i) and len(i)>1 else (i,1)
-            self.items[key].update(d , n)
+            self.__dict__[key].update(d , n)
 
     def __str__(self):
-        return "["+ ", ".join([f"{key}: {i.avg()}" for key, i in self.items.items()]) + "]"
-            
+        return "["+ ", ".join([f"{key}: {i.avg()}" for key, i in self.__dict__.items()]) + "]"
+
+    def get_av_dict(self):
+        return {key: i.avg() for key, i in self.__dict__.items()}
+    
+class UnCallBack():
+    def __init__(self, info_list = [] ):
+        # for example ['loss_train','acc_train',"w_loss_train','loss_val','acc_val','n_un']
+        self.info_list = info_list
+        for key in self.info_lis:
+           self.__dict__[key] = []
+
+    def __call__(self, **kwargs):
+        for key, i in kwargs.items():
+           if not (key in self.__dict__):
+               self.__dict__[key] = []
+           self.__dict__[key].append()       
+
+    def last_info(self):
+       return {key: f'{self.__dict__[key] [-1]:.3f}' for key in self.info_list}
     
 
-
-class CallBack:
+class CallBack_old:
     def __init__(self, eval_fn, name=None):
         self.eval_fn = eval_fn
         self.train_losses = []
@@ -83,9 +99,13 @@ class CallBack:
 acc = Accumulator()
 
 
+
 acc(accuracy= (10,20), data=10,newo =6.6)
 
 acc(accuracy= (10,10), data=5,newo =6.6)
 acc(accuracy= (10,10), data=5,newo =6.6)
+
+
+CallBack()
 
 print(acc)

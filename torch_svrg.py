@@ -1,4 +1,4 @@
-from torch_svrg_utils import SVRG_k ,SVRG_Snapshot, test_epoch_SVRG, train_epoch_SVRG
+from torch_svrg_tr import SVRG_k ,SVRG_Snapshot, test_epoch_SVRG, train_epoch_SVRG
 
 
 import torch
