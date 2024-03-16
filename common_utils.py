@@ -16,43 +16,66 @@ class Average():
 
     def update(self, val, n=1):
         assert(n > 0)
-        print(self.count)
         self.sum += val * n
         self.count += n
 
 
 class Accumulator():
     def __init__(self):
-        pass
+        self._av = {}
+        self._storage = {}
 
-    def __call__(self,**kwargs):
+    def average(self,**kwargs):
         for key, i in kwargs.items():
-            if not (key in self.__dict__):
-                self.__dict__[key] = Average()
+            if not (key in self._av):
+                self._av[key] = Average()
             d , n = i if _has_len(i) and len(i)>1 else (i,1)
-            self.__dict__[key].update(d , n)
+            self._av[key].update(d , n)
+
+    def store(self,**kwargs):
+        for key, i in kwargs.items():
+            if not (key in self._storage):
+                self._storage[key] = []
+            self._storage[key].append(i)
 
     def __str__(self):
-        return "["+ ", ".join([f"{key}: {i.avg()}" for key, i in self.__dict__.items()]) + "]"
+        return "["+ ", ".join([f"{key}: {i.avg()}" for key, i in self.getAll.items()]) + "]"
 
-    def get_av_dict(self):
-        return {key: i.avg() for key, i in self.__dict__.items()}
+    def getStored(self):
+        return self._storage
+
+    def getAverage(self):
+        return {key: i.avg() for key, i in self.av.items()}
     
+    def getAll(self):
+        return {**self.getAverage(), **self._storage}
+    
+
 class UnCallBack():
-    def __init__(self, info_list = [] ):
+    def __init__(self,eval_fn, info_list = [] ):
         # for example ['loss_train','acc_train',"w_loss_train','loss_val','acc_val','n_un']
+        self.eval_fn = eval_fn
         self.info_list = info_list
-        for key in self.info_lis:
+
+        self.val_losses = []
+        self.val_accs = []
+        for key in self.info_list:
            self.__dict__[key] = []
 
-    def __call__(self, **kwargs):
+    def __call__(self, model, val_dataloader, loss_fn, **kwargs):
         for key, i in kwargs.items():
            if not (key in self.__dict__):
                self.__dict__[key] = []
-           self.__dict__[key].append()       
+           self.__dict__[key].append(i)       
+
+        loss_val, acc_val = self.eval_fn(model, val_dataloader, loss_fn)
+        self.val_losses.append(loss_val)
+        self.val_accs.append(acc_val)
+        return self.last_info()
 
     def last_info(self):
-       return {key: f'{self.__dict__[key] [-1]:.3f}' for key in self.info_list}
+
+       return {key: f'{self.__dict__[key][-1]:.3f}' for key in self.info_list if self.__dict__[key] }
     
 
 class CallBack_old:
@@ -96,16 +119,13 @@ class CallBack_old:
     
 
 
-acc = Accumulator()
-
-
-
-acc(accuracy= (10,20), data=10,newo =6.6)
-
-acc(accuracy= (10,10), data=5,newo =6.6)
-acc(accuracy= (10,10), data=5,newo =6.6)
-
-
-CallBack()
-
-print(acc)
+#acc = Accumulator()
+#
+#
+#
+#acc(accuracy= (10,20), data=10,newo =6.6)
+#
+#acc(accuracy= (10,10), data=5,newo =6.6)
+#acc(accuracy= (10,10), data=5,newo =6.6)
+#print(acc)
+    
