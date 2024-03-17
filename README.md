@@ -53,10 +53,12 @@ any_name_youwhant (<class 'list'>)
 >>>
 >>> callback.haha_str   
 ['haha_0', 'haha_1', 'haha_2', 'haha_3', 'haha_4']
+>>>
 >>> callback.some_name_1
 [0.0, 5.0, 10.0, 15.0, 20.0]
->>>callback.callback.save("new_callback")
->>> callback.save("new_callback")          
+>>>
+>>> callback.save("new_callback")
+>>>          
 >>> cb = UnCallBack.load("new_callback.pickle") 
 >>> cb
 meta:
