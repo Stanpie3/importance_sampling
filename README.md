@@ -73,5 +73,4 @@ haha_int (<class 'int'>)
 some_name_1 (<class 'float'>)
 any_name_youwhant (<class 'list'>)
 >>>
-#callback
 ```
