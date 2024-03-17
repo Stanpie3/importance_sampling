@@ -67,7 +67,7 @@ class UnCallBack():
     def setMeta(self,**kwargs):
         self.meta = kwargs
 
-    def __call__(self,  loss_fn, **kwargs):
+    def __call__(self, **kwargs):
         for key, i in kwargs.items():
            if not (key in self.__dict__):
                self.__dict__[key] = []

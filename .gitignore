@@ -2,3 +2,5 @@ cifar*/
 __pycache__/
 ImportanceSamplingMLProject (2).ipynb
 *.pickle
+*ignore.py
+*ignore.ipynb
