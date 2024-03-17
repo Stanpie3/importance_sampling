@@ -26,6 +26,9 @@ How to use Accumulator from the utils
 
 
 ```python
+>>> from common_utils import Accumulator, UnCallBack
+>>> callback = UnCallBack()
+>>>
 >>> callback.setMeta(epoch_n_blabla=5, some_text="tt" )
 >>>
 >>> for epoch_n in range(5):
