@@ -8,10 +8,10 @@ How to use Accumulator from the utils
 >>> from common_utils import Accumulator
 >>> acc = Accumulator( )
 >>> for i in range(1,10):
-...     acc.average(some_name_1 = (i,10),
-...                 some_name_2 = (i,i),
-...                 blabla = i,
-...                 blabla_2 = 1)
+...     acc.average(some_name_1 = (i,10), # here i is average of some value, 10 is the number of points from wich average was calculated
+...                 some_name_2 = (i,i), 
+...                 blabla = i,  # here we suupose that the number of points was equal 1
+...                 blabla_2 = 1) 
 ...
 ...     acc.store(any_name_youwant = 9, 
 ...               or_even_this= [i,i+1])
