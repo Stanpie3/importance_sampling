@@ -1,5 +1,9 @@
 
 
+import os
+import pickle
+from pathlib import Path, PurePath
+
 def _has_len(obj):
     return hasattr(obj, '__len__')
 
@@ -45,87 +49,71 @@ class Accumulator():
         return self._storage
 
     def getAverage(self):
-        return {key: i.avg() for key, i in self.av.items()}
+        return {key: i.avg() for key, i in self._av.items()}
     
     def getAll(self):
         return {**self.getAverage(), **self._storage}
     
 
 class UnCallBack():
-    def __init__(self,eval_fn, info_list = [] ):
+    __exclude = ["info_list", "name", "meta"]
+
+    def __init__(self, name="callback", info_list = [], meta = None ):
         # for example ['loss_train','acc_train',"w_loss_train','loss_val','acc_val','n_un']
-        self.eval_fn = eval_fn
         self.info_list = info_list
+        self.name = name
+        self.meta = None
 
-        self.val_losses = []
-        self.val_accs = []
-        for key in self.info_list:
-           self.__dict__[key] = []
+    def setMeta(self,**kwargs):
+        self.meta = kwargs
 
-    def __call__(self, model, val_dataloader, loss_fn, **kwargs):
+    def __call__(self,  loss_fn, **kwargs):
         for key, i in kwargs.items():
            if not (key in self.__dict__):
                self.__dict__[key] = []
            self.__dict__[key].append(i)       
 
-        loss_val, acc_val = self.eval_fn(model, val_dataloader, loss_fn)
-        self.val_losses.append(loss_val)
-        self.val_accs.append(acc_val)
+
         return self.last_info()
 
     def last_info(self):
-
-       return {key: f'{self.__dict__[key][-1]:.3f}' for key in self.info_list if self.__dict__[key] }
+       ret = {}
+       for key in self.info_list:
+           val = self.__dict__.get(key, None)
+           if val :
+               ret[key] = f'{val[-1]:.3f}'   
+           else :
+               ret[key] = 'undefined'
+       return ret
+       #return {key: f'{self.__dict__[key][-1]:.3f}' for key in self.info_list if  self.__dict__.get(key, None) }
     
-
-class CallBack_old:
-    def __init__(self, eval_fn, name=None):
-        self.eval_fn = eval_fn
-        self.train_losses = []
-        self.train_accs = []
-        self.train_w_losses = []
-        self.train_max_p_i = []
-        self.train_num_unique_points = []
-        self.val_losses = []
-        self.val_accs = []
-        self.n_un = []
-
-
+    def save(self, name = None):
+        if name is None :
+            name = self.name
         
+        p = PurePath(name)
+        np= str(p.parent)+"/"+p.stem 
+        suffix = p.suffix if  p.suffix else ".pickle"
 
-    def last_info(self):
-        return {'loss_train': f'{self.train_losses[-1]:.3f}',
-                'acc_train': f'{self.train_accs[-1]:.3f}',
-                'w_loss_train': f'{self.train_w_losses[-1]:.3f}',
-                'loss_val': f'{self.val_losses[-1]:.3f}',
-                'acc_val': f'{self.val_accs[-1]:.3f}',
-                'n_un': f'{self.n_un[-1]:.3f}',
-        }
-    
+        name = f"{np}{suffix}"
+        if os.path.exists(name):
+            i = 0
+            name = f"{np}_{i}{suffix}"
+            while os.path.exists(name):
+                i += 1
 
+        with open(name, 'wb') as f:
+            pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
 
-    def __call__(self, model, val_dataloader, loss_fn,
-                 epoch_loss=None, epoch_acc=None, epoch_weighted_loss=None, epoch_max_p_i_s=None, epoch_num_unique_points_s=None, n_un=None):
-        self.train_losses.append(epoch_loss)
-        self.train_accs.append(epoch_acc)
-        self.train_w_losses.append(epoch_weighted_loss)
-        self.train_max_p_i.append(epoch_max_p_i_s)
-        self.train_num_unique_points.append(epoch_num_unique_points_s)
-        loss_val, acc_val = self.eval_fn(model, val_dataloader, loss_fn)
-        self.val_losses.append(loss_val)
-        self.val_accs.append(acc_val)
-        self.n_un.append(n_un)
-        return self.last_info()
-    
+    def load(name):
+        with open(name, 'rb') as f:
+            callback = pickle.load(f)
+        return callback
+
+    def __str__(self):
+        return "\n".join(
+            [ f"{key} ({type(i[0])})" for key, i in self.__dict__.items() if not key in self.__exclude ])
 
 
-#acc = Accumulator()
-#
-#
-#
-#acc(accuracy= (10,20), data=10,newo =6.6)
-#
-#acc(accuracy= (10,10), data=5,newo =6.6)
-#acc(accuracy= (10,10), data=5,newo =6.6)
-#print(acc)
-    
+    def __repr__(self):
+        return "meta:\n"+str(self.meta) + "\n\ncolumns:\n" + self.__str__()
