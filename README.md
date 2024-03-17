@@ -56,7 +56,10 @@ any_name_youwhant (<class 'list'>)
 >>>
 >>> callback.some_name_1
 [0.0, 5.0, 10.0, 15.0, 20.0]
->>>
+```
+
+Also it is possible to save/load callback state
+```python
 >>> callback.save("new_callback")
 >>>          
 >>> cb = UnCallBack.load("new_callback.pickle") 
