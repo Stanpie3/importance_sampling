@@ -101,6 +101,8 @@ class UnCallBack():
             name = f"{np}_{i}{suffix}"
             while os.path.exists(name):
                 i += 1
+                name = f"{np}_{i}{suffix}"
+                
 
         with open(name, 'wb') as f:
             pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
