@@ -1,10 +1,9 @@
 
 
 import torch
-from torchvision.datasets import CIFAR10, MNIST, CIFAR100 , VisionDataset
+from torchvision.datasets import CIFAR10, MNIST, CIFAR100, VisionDataset
 from torchvision import transforms
-
-from torch.utils.data.sampler import SubsetRandomSampler,RandomSampler
+from torch.utils.data.sampler import SubsetRandomSampler, RandomSampler
 from torch.utils.data import DataLoader
 from PIL import Image
 
@@ -12,6 +11,8 @@ normalize = transforms.Normalize(
     mean=[0.4914, 0.4822, 0.4465],
     std=[0.247, 0.2435, 0.2616],
 )
+
+
 
 def addIndexes(data_set: type[VisionDataset]) :
     class IndexWrrapper(data_set):

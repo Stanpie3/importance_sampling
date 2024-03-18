@@ -42,86 +42,18 @@ class VarReductionCondition:
         )
 
 
-def get_g(output, y_batch  ):
+def get_g(output, y_batch , loss_fn,  use_loss = False ):
     num_classes = output.shape[1]
     with torch.no_grad():
-        probs = F.softmax(output, dim=1)
-        one_hot_targets = F.one_hot(y_batch, num_classes=num_classes)
-        g_i_norm = torch.norm(probs - one_hot_targets, dim=-1).detach().cpu().numpy()
+        if use_loss:
+            g_i_norm = loss_fn(output, y_batch).detach().cpu().numpy()
+        else:
+            assert(type(loss_fn)==torch.nn.CrossEntropyLoss)
+            # this is particular implementation for crossentropy loss
+            probs = F.softmax(output, dim=1)
+            one_hot_targets = F.one_hot(y_batch, num_classes=num_classes)
+            g_i_norm = torch.norm(probs - one_hot_targets, dim=-1).detach().cpu().numpy()
+    
+    #print(g_i_norm.shape)
     return g_i_norm
 
-
-
-
-
-def train_batch_is(model,
-                x_batch, 
-                y_batch, 
-                loss_fn, 
-                optimizer,
-                accumulator : Accumulator,  
-                condition :VarReductionCondition, 
-                presample = 3.0 ):
-
-    flag = False
-    model.train()
-    model.zero_grad()
-
-    batch_size = x_batch.shape[0]
-
-    selected_batch_size = int(batch_size / presample)
-    
-    if condition.satisfied :
-        #print("condition satisfied")
-        output = model(x_batch)
-        g_i_norm = get_g(output, y_batch  )
-        condition.update(g_i_norm)
-
-    else:
-        #print("condition not satisfied")
-        g_i_norm = np.ones(batch_size)
-
-
-    p_i = g_i_norm / np.sum(g_i_norm)
-    batch_indices = np.random.choice(np.arange(batch_size), size = selected_batch_size, replace=True, p=p_i)
-
-    selected_p_i = p_i[batch_indices]
-
-    if condition.previously_satisfied:
-        loss = loss_fn(output, y_batch)
-        selected_loss = loss[batch_indices]
-    else :
-        output = model(x_batch[batch_indices])
-        y_batch = y_batch[batch_indices]
-        condition.update( get_g(output, y_batch ) )
-        loss = loss_fn(output, y_batch)
-        selected_loss = loss
-        flag = True
-        
-    w_i = 1.0 / (batch_size * selected_p_i)
-
-    weighted_loss = (torch.tensor(w_i).to(selected_loss.device).detach() * selected_loss).mean()
-
-    weighted_loss.backward()
-
-    optimizer.step()
-
-    max_p_i = np.max(p_i)
-
-    num_unique_points = np.unique(batch_indices).size
-
-    with torch.no_grad():
-        batch_loss = loss.mean().cpu().item()
-        weighted_batch_loss = weighted_loss.mean().cpu().item()
-        batch_acc_sum = (output.argmax(dim=1) == y_batch).mean().cpu().item()
-
-    n = len(output)
-
-
-    accumulator( train_losses = ( batch_loss, n) ,
-                 train_accs = ( batch_acc_sum, n) ,
-                 train_w_losses = ( weighted_batch_loss, selected_batch_size) ,
-                 train_flag = flag
-                )
-
-    return  max_p_i, num_unique_points
