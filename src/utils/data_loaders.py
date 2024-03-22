@@ -34,7 +34,7 @@ def addIndexes(data_set: type[VisionDataset]) :
 
 class RnadomBatchSampler(Sampler[List[int]]):
     r"""Sample real random batches.
-
+    
     Args:
 
         data_source (Dataset): dataset to sample from

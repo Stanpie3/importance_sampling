@@ -167,15 +167,28 @@ def train_full_upper_bound(model,
                train_dataloader, 
                loss_fn, 
                optimizer, 
-               n_epochs, 
+               n_epochs: int, 
                eval = None, 
                callback=None, 
-               presample=2, 
+               presample=3, 
                tau_th = None, 
                use_loss_estimation = False,
                device = "cpu",
                **kwargs ):
-    
+    """
+    train model using upper-bound or loss based algorithm 
+
+    Args:
+        model (Module): the model must be without a dropout
+        train_dataloader (DataLoader): 
+        optimizer (int): , number of epochs 
+        eval (Callable[[nn.Module], dict[str, Any]]): function which return the dictionary
+        callback (UnCallBack): None or UnCallBack object. is used to write the log
+        presample (int): number of times the batch will be reduced
+        tau_th float: threshold 
+        use_loss_estimation (bool): if is True the loss based algorithm will be used
+            otherwise upper-bound based algorithm will be used
+    """   
 
     large_batch = int( train_dataloader.batch_size)
 
@@ -201,15 +214,16 @@ def train_full_upper_bound(model,
         accum = Accumulator()
         
         for X_batch, y_batch in train_dataloader:
-            train_batch_is( model, 
-                            (X_batch.to(device), y_batch.to(device)),
-                            loss_fn, 
-                            optimizer, 
-                            accum,
-                            condition,
-                            presample,
-                            use_loss_estimation,
-                            **kwargs)
+            train_batch_upper_bound( 
+                model, 
+                (X_batch.to(device), y_batch.to(device)),
+                loss_fn, 
+                optimizer, 
+                accum,
+                condition,
+                presample,
+                use_loss_estimation,
+                **kwargs)
             
         if callback :
             val_scores = eval(model) if eval else {}

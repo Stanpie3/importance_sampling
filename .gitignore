@@ -1,8 +1,10 @@
 cifar*/
 data/
 __pycache__/
+callbacks/
+callbacks*/
+
 ImportanceSamplingMLProject (2).ipynb
 *.pickle
 *ignore.py
 *ignore.ipynb
-callbacks/

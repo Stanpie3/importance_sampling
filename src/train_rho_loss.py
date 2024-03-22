@@ -51,30 +51,30 @@ def train_irr_loss(
         loss_fn, 
         opt, 
         accumulator : Accumulator = None , 
-        selection__mode = True, presample = 3.0 ):
+        device = "cpu"):
     
     # BEGIN Solution (do not delete this comment!)
     ret_loss, correct = (0.0, 0)
     irreducible_loss_clf.train(True)  # Set model to training mode
-    
+
+    N=0
     for x, labels in data_loader:
-        x, labels = x.cuda(), labels.cuda()
+        x, labels = x.to(device), labels.to(device)
         opt.zero_grad()
         all_pred = irreducible_loss_clf(x)
         loss = loss_fn(all_pred, labels).mean()
 
         loss.backward()
         opt.step()
-        
-        ret_loss += loss.item()
-        #pred = all_pred.max(1)[1]
 
+        n = len(labels)
+        ret_loss += loss.item()*n
+        N += n
         with torch.no_grad():
-            #correct += (pred==labels).sum().item()
             correct += (all_pred.argmax(dim=1) == labels).sum().cpu().item()
 
-    ret_loss = ret_loss / len(data_loader)
-    accuracy = correct / len(data_loader.dataset)
+    ret_loss = ret_loss / N
+    accuracy = correct / N
 
 
     return {"ret_loss":ret_loss, "accuracy": accuracy}
@@ -142,7 +142,7 @@ def train_full_rho_loss(model,
                         eval = None, 
                         callback = None, 
                         presample = 3, 
-                        tau_th = None):
+                        device = "cpu"):
 
 
     large_batch = int( train_dataloader.batch_size)
@@ -151,32 +151,35 @@ def train_full_rho_loss(model,
         callback.setMeta(
             large_batch = large_batch,
             n_epochs = n_epochs, 
-            presample = presample, 
-            tau_th = tau_th)
+            presample = presample)
         
 
     try:
-        model.load_state_dict(torch.load("irr_model"))
-        model.eval()
-        print("irr model loades")
+        model_irr.load_state_dict(torch.load("irr_model"))
+        model_irr.eval()
+        print("irr model loaded")
     except:
         epochs = tqdm(range(n_epochs), desc='Irr epochs', leave=True)
         for i_epoch in epochs:
-            dict_ = train_irr_loss(model_irr, train_irr_loader, loss_fn, optimizer_irr)
+            dict_ = train_irr_loss(model_irr, 
+                                   train_irr_loader, 
+                                   loss_fn, 
+                                   optimizer_irr, 
+                                   device = device)
+            
             epochs.set_postfix(dict_)
-
-    torch.save(model_irr.state_dict(), "irr_model")
+        
+        torch.save(model_irr.state_dict(), "irr_model")
     
-    d = model.device
+
     epochs = tqdm(range(n_epochs), desc='Epochs', leave=True)
     for i_epoch in epochs:
         accum = Accumulator()
         
-        
         for idxs, X_batch, y_batch in train_dataloader:
             train_batch_rho_loss(model, 
                                 model_irr,
-                                (idxs, X_batch.to(d), y_batch.to(d)),
+                                (idxs, X_batch.to(device), y_batch.to(device)),
                                 loss_fn,
                                 optimizer, 
                                 accum,
