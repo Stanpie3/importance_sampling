@@ -1,4 +1,10 @@
 # importance_sampling
+[Upper bound and loss based importance sampling](https://github.com/Stanpie3/importance_sampling/blob/main/src/train_importance_sampling.py))
+
+[RHO-LOSS](https://github.com/Stanpie3/importance_sampling/blob/main/src/train_rho_loss.py)
+
+[Schaul et al., 2015](https://github.com/Stanpie3/importance_sampling/blob/main/src/train_schaul.py)
+
 
 
 # About common_utils
