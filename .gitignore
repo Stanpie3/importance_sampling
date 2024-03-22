@@ -1,4 +1,5 @@
 cifar*/
+data/
 __pycache__/
 ImportanceSamplingMLProject (2).ipynb
 *.pickle

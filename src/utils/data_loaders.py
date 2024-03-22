@@ -113,7 +113,7 @@ def train_dataloader(root_dir='./cifar10', batch_size=120, index = False, seed =
 
 def test_dataloader(root_dir='./cifar10', batch_size=120):
     test_dataset = CIFAR10(root=root_dir, train=False, download=True, transform=transforms.Compose([transforms.ToTensor(), normalize]))
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     return test_dataloader
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from common_utils import Accumulator
+from src.utils.common import Accumulator
 from torch.optim import Optimizer
 
 
@@ -159,3 +159,60 @@ def train_batch_is_tr(model,
         #accumulator.store( 
         #    max_p_i = max_p_i ,
         #    num_unique_points = num_unique_points)
+
+
+
+def train_full_upper_bound(model, 
+               train_dataloader, 
+               loss_fn, 
+               optimizer, 
+               n_epochs, 
+               eval = None, 
+               callback=None, 
+               presample=2, 
+               tau_th = None, 
+               use_loss_estimation = False,
+               device = "cpu",
+               **kwargs ):
+    
+
+    large_batch = int( train_dataloader.batch_size)
+
+    # Compute the threshold using eq. 29 in
+    # https://arxiv.org/abs/1803.00942
+
+    B = large_batch
+    b = int( large_batch / presample)
+    tau_th = float(B + 3*b) / (3*b) if tau_th is None else   tau_th
+
+    condition = VarReductionCondition(tau_th)
+    
+    if callback :
+        callback.setMeta(
+            large_batch = large_batch,
+            n_epochs = n_epochs, 
+            presample = presample, 
+            tau_th = tau_th,
+            use_loss_estimation = use_loss_estimation)
+
+    epochs = tqdm(range(n_epochs), desc='Epochs', leave=True)
+    for i_epoch in epochs:
+        accum = Accumulator()
+        
+        for X_batch, y_batch in train_dataloader:
+            train_batch_is_tr( model, 
+                            (X_batch.to(device), y_batch.to(device)),
+                            loss_fn, 
+                            optimizer, 
+                            accum,
+                            condition,
+                            presample,
+                            use_loss_estimation,
+                            **kwargs)
+            
+        if callback :
+            val_scores = eval(model) if eval else {}
+            #print(condition.string + f" n_un={callback.n_un[-1]}")
+            cb_dict = callback( **accum.getAll(), **val_scores)
+            print(condition.string)
+            epochs.set_postfix(cb_dict)
