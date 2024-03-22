@@ -5,7 +5,7 @@
 
 [Schaul et al., 2015](https://github.com/Stanpie3/importance_sampling/blob/main/src/train_schaul.py)
 
-
+[Loshchilov & Hutter,2015]([https://github.com/Stanpie3/importance_sampling/blob/main/src/train_schaul.py](https://github.com/Stanpie3/importance_sampling/blob/main/src/train_loshchilov.py))
 
 # About common_utils
 How to use Accumulator from the utils 
