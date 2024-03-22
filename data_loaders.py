@@ -53,6 +53,7 @@ def train_val_dataloader(root_dir='./cifar10', split_shuffle=True, val_size=0.1,
     return train_dataloader, val_dataloader
 
 
+
 def train_dataloader(root_dir='./cifar10', batch_size=120, index = False, seed = None , subset =None ):
     DataSet = addIndexes(CIFAR10) if index else CIFAR10
     train_dataset = DataSet(root=root_dir, train=True, download=True, transform=transforms.Compose([transforms.ToTensor(), normalize]))
@@ -72,3 +73,28 @@ def test_dataloader(root_dir='./cifar10', batch_size=120):
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
     return test_dataloader
 
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    import numpy as np
+
+    train = train_dataloader(batch_size=120,index=True,subset=0.6)
+    print(train._auto_collation)
+    print(train.batch_sampler)
+    print(train.sampler)
+    print(train._index_sampler)
+
+    l = []
+    for i,x,y in train:
+        i :torch.Tensor = i
+        #print(i)
+        l.extend(i)
+        #print(i)
+    
+    values, counts = np.unique(l, return_counts=True)
+    print(max(counts),len(l), len(train))

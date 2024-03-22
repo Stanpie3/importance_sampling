@@ -3,6 +3,9 @@
 import os
 import pickle
 from pathlib import Path, PurePath
+from typing import Any, Callable
+from torch import is_tensor, nn
+
 
 def _has_len(obj):
     return hasattr(obj, '__len__')
@@ -16,6 +19,8 @@ class Average():
         self.sum = 0
         
     def avg(self):
+        if (is_tensor(self.sum)):
+            return self.sum.cpu().item()/float(self.count)
         return  self.sum / float(self.count)
 
     def update(self, val, n=1):
@@ -119,3 +124,7 @@ class UnCallBack():
 
     def __repr__(self):
         return "meta:\n"+str(self.meta) + "\n\ncolumns:\n" + self.__str__()
+    
+
+
+Eval_ty = Callable[[nn.Module], dict[str, Any]] 
