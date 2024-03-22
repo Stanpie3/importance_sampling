@@ -99,6 +99,10 @@ class UnCallBack():
         p = PurePath(name)
         np= str(p.parent)+"/"+p.stem 
         suffix = p.suffix if  p.suffix else ".pickle"
+        
+        isExist = os.path.exists(p.parent)
+        if not isExist:
+            os.makedirs(p.parent)
 
         name = f"{np}{suffix}"
         if os.path.exists(name):
@@ -107,7 +111,8 @@ class UnCallBack():
             while os.path.exists(name):
                 i += 1
                 name = f"{np}_{i}{suffix}"
-                
+
+      
 
         with open(name, 'wb') as f:
             pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)

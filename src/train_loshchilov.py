@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import torch.nn.functional as F
 from src.utils.common import Accumulator
 from torch.optim import Optimizer
 from tqdm import tqdm 
