@@ -84,6 +84,8 @@ def samplers(n, split_shuffle=True, val_size=0.1):
     val_sampler = SubsetRandomSampler(idx[split_idx:])
     return train_sampler, val_sampler
 
+
+
 def train_val_dataloader(root_dir='./cifar10', split_shuffle=True, val_size=0.1, batch_size=120, index = False):
     DataSet = addIndexes(CIFAR10) if index else CIFAR10
 
@@ -115,11 +117,6 @@ def test_dataloader(root_dir='./cifar10', batch_size=120):
     test_dataset = CIFAR10(root=root_dir, train=False, download=True, transform=transforms.Compose([transforms.ToTensor(), normalize]))
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     return test_dataloader
-
-
-
-
-
 
 
 

@@ -12,13 +12,13 @@ def evaluate(model, dataloader, loss_fn, device):
             output = model(X_batch.to(device)).cpu()
             logits.append(output)
             targets.append(y_batch)
-    
+            #print(output)
     logits = torch.cat(logits)
     targets = torch.cat(targets)
     loss = loss_fn(logits, targets).mean().item()
 
-    pred = logits.max(1)[1]
-    #pred = logits.argmax(dim=1)
+    #pred = logits.max(1)[1]
+    pred = logits.argmax(dim=1)
     acc = (pred == targets).sum().item() / len(targets)
     return loss, acc
 
@@ -43,3 +43,11 @@ def epoch_test(clf, loader,  criterion, device):
     accuracy = correct / len(loader.dataset)
 
     return ret_loss, accuracy
+
+
+
+def makeEval(test_loader, loss_fn, device):
+    def eval_callback(model):
+        loss, acc = evaluate(model, test_loader, loss_fn, device)
+        return {"val_loss": loss, "val_acc": acc}
+    return eval_callback

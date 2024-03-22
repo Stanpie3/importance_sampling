@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from src.utils.common import Accumulator
+from utils.common import Accumulator
 from torch.optim import Optimizer
-
+from tqdm import tqdm 
 
 class VarReductionCondition:
 
@@ -63,7 +63,7 @@ def get_g(output, y_batch , loss_fn,  use_loss = False ):
 
 
 
-def train_batch_is_tr(model,
+def train_batch_upper_bound(model,
                 batch,  
                 loss_fn, 
                 optimizer : Optimizer, 
@@ -76,8 +76,9 @@ def train_batch_is_tr(model,
     satisfied = False
     model.train()
     optimizer.zero_grad( set_to_none=True )
-
+    
     (X_batch, y_batch) = batch
+
     batch_size = X_batch.shape[0]
     no_grad_y_batch = y_batch
     selected_batch_size = int(batch_size / presample)
@@ -200,7 +201,7 @@ def train_full_upper_bound(model,
         accum = Accumulator()
         
         for X_batch, y_batch in train_dataloader:
-            train_batch_is_tr( model, 
+            train_batch_is( model, 
                             (X_batch.to(device), y_batch.to(device)),
                             loss_fn, 
                             optimizer, 
